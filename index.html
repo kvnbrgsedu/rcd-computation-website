@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reinforced Concrete Design Calculator — NSCP 2015</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Floating navigation -->
+  <nav class="nav-glass" id="nav-glass">
+    <div class="nav-inner">
+      <a href="#hero" class="nav-link">Home</a>
+      <a href="#calculator" class="nav-link">Singly Reinforced</a>
+      <a href="#calculator" class="nav-link" data-tab="doubly-analysis">Doubly Reinforced</a>
+      <a href="#calculator" class="nav-link" data-tab="usd-design">Design Tools</a>
+      <a href="#about" class="nav-link">About</a>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <header class="hero" id="hero">
+    <div class="hero-bg-pattern"></div>
+    <div class="hero-content">
+      <h1 class="hero-title">Reinforced Concrete Design Calculator</h1>
+      <p class="hero-subtitle">Interactive RCD calculations for rectangular beams based on NSCP 2015.</p>
+      <p class="hero-desc">A powerful engineering tool that automatically performs reinforced concrete design computations including cracked section analysis, ultimate strength design, and reinforcement requirements.</p>
+    </div>
+  </header>
+
+  <main id="calculator" class="calculator-section">
+    <div class="calculator-toolbar">
+      <div class="topic-tabs" role="tablist">
+        <button type="button" class="topic-tab active" data-tab="uncracked" role="tab">Uncracked Section</button>
+        <button type="button" class="topic-tab" data-tab="cracked" role="tab">Cracked Section</button>
+        <button type="button" class="topic-tab" data-tab="usd-analysis" role="tab">Ultimate Strength Analysis</button>
+        <button type="button" class="topic-tab" data-tab="usd-design" role="tab">Ultimate Strength Design</button>
+        <button type="button" class="topic-tab" data-tab="doubly-analysis" role="tab">Doubly — Analysis</button>
+        <button type="button" class="topic-tab" data-tab="doubly-design" role="tab">Doubly — Design</button>
+      </div>
+      <div class="toolbar-controls">
+        <label class="toggle-wrap" title="Step-by-step vs result only">
+          <span class="toggle-label">Step-by-step</span>
+          <input type="checkbox" id="toggle-step-mode" class="toggle-input" checked>
+          <span class="toggle-slider"></span>
+        </label>
+        <label class="toggle-wrap" title="Dark mode">
+          <span class="toggle-label">Dark</span>
+          <input type="checkbox" id="toggle-dark" class="toggle-input">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+    </div>
+
+    <div class="three-panel">
+      <!-- Panel 1: Input cards -->
+      <aside class="panel panel-input">
+        <div class="panel-inner input-cards" id="input-cards-container">
+          <!-- Tab content for inputs is injected / shown per topic -->
+          <div class="tab-input-content active" id="input-uncracked">
+            <div class="input-card card-elevated">
+              <h3 class="input-card-title">Section &amp; Material</h3>
+              <label><span class="label-text">b (mm)</span><input type="number" id="uncracked-b" value="300" min="100" step="10"></label>
+              <label><span class="label-text">h (mm)</span><input type="number" id="uncracked-h" value="500" min="200" step="10"></label>
+              <label><span class="label-text">f<sub>c</sub>′ (MPa)</span><input type="number" id="uncracked-fc" value="28" min="17" step="0.1"></label>
+              <label><span class="label-text">λ</span><input type="number" id="uncracked-lambda" value="1" min="0.5" max="1" step="0.05" title="Lightweight factor"></label>
+              <label><span class="label-text">M applied (kN·m)</span><input type="number" id="uncracked-M" value="20" min="0" step="1"></label>
+            </div>
+          </div>
+          <div class="tab-input-content" id="input-cracked">
+            <div class="input-card card-elevated">
+              <h3 class="input-card-title">Section &amp; Material</h3>
+              <label><span class="label-text">b (mm)</span><input type="number" id="cracked-b" value="300" min="100" step="10"></label>
+              <label><span class="label-text">h (mm)</span><input type="number" id="cracked-h" value="500" min="200" step="10"></label>
+              <label><span class="label-text">d (mm)</span><input type="number" id="cracked-d" value="450" min="100" step="10"></label>
+              <label><span class="label-text">f<sub>c</sub>′ (MPa)</span><input type="number" id="cracked-fc" value="28" min="17" step="0.1"></label>
+              <label><span class="label-text">n (modular ratio)</span><input type="number" id="cracked-n" value="9" min="1" step="0.5" placeholder="0 = auto"></label>
+            </div>
+            <div class="input-card card-elevated">
+              <h3 class="input-card-title">Reinforcement &amp; Moment</h3>
+              <label><span class="label-text">N<sub>b</sub></span><input type="number" id="cracked-Nb" value="4" min="1" step="1"></label>
+              <label><span class="label-text">D<sub>b</sub> (mm)</span><input type="number" id="cracked-Db" value="20" min="10" step="2"></label>
+              <label><span class="label-text">M (kN·m)</span><input type="number" id="cracked-M" value="80" min="0" step="1"></label>
+            </div>
+          </div>
+          <div class="tab-input-content" id="input-usd-analysis">
+            <div class="input-card card-elevated">
+              <h3 class="input-card-title">Material</h3>
+              <label><span class="label-text">f<sub>c</sub>′ (MPa)</span><input type="number" id="usd-a-fc" value="28" min="17" step="0.1"></label>
+              <label><span class="label-text">f<sub>y</sub> (MPa)</span><input type="number" id="usd-a-fy" value="420" min="280" step="1"></label>
+            </div>
+            <div class="input-card card-elevated">
+              <h3 class="input-card-title">Section</h3>
+              <label><span class="label-text">b (mm)</span><input type="number" id="usd-a-b" value="300" min="100" step="10"></label>
+              <label><span class="label-text">h (mm)</span><input type="number" id="usd-a-h" value="500" min="200" step="10"></label>
+              <label><span class="label-text">d (mm)</span><input type="number" id="usd-a-d" value="450" min="100" step="10"></label>
+            </div>
+            <div class="input-card card-elevated">
+              <h3 class="input-card-title">Reinforcement &amp; Load</h3>
+              <label><span class="label-text">N<sub>b</sub></span><input type="number" id="usd-a-Nb" value="4" min="1" step="1"></label>
+              <label><span class="label-text">D<sub>b</sub> (mm)</span><input type="number" id="usd-a-Db" value="20" min="10" step="2"></label>
+              <label><span class="label-text">M<sub>u</sub> (kN·m)</span><input type="number" id="usd-a-Mu" value="150" min="1" step="1"></label>
+            </div>
+          </div>
+          <div class="tab-input-content" id="input-usd-design">
+            <div class="input-card card-elevated">
+              <h3 class="input-card-title">Design Mode</h3>
+              <label class="radio-group"><input type="radio" name="usd-design-mode" value="moment" checked> From M<sub>u</sub></label>
+              <label class="radio-group"><input type="radio" name="usd-design-mode" value="loads"> From loads (L, DL, LL)</label>
+            </div>
+            <div class="input-card card-elevated" id="usd-design-moment-inputs">
+              <h3 class="input-card-title">Given Moment</h3>
+              <label><span class="label-text">b (mm)</span><input type="number" id="usd-d-b" value="300" min="100" step="10"></label>
+              <label><span class="label-text">h (mm)</span><input type="number" id="usd-d-h" value="500" min="200" step="10"></label>
+              <label><span class="label-text">d (mm)</span><input type="number" id="usd-d-d" value="450" min="100" step="10"></label>
+              <label><span class="label-text">f<sub>c</sub>′ (MPa)</span><input type="number" id="usd-d-fc" value="28" min="17" step="0.1"></label>
+              <label><span class="label-text">f<sub>y</sub> (MPa)</span><input type="number" id="usd-d-fy" value="420" min="280" step="1"></label>
+              <label><span class="label-text">M<sub>u</sub> (kN·m)</span><input type="number" id="usd-d-Mu" value="150" min="1" step="1"></label>
+              <label><span class="label-text">D<sub>b</sub> (mm)</span><select id="usd-d-Db"><option value="10">10</option><option value="12">12</option><option value="16" selected>16</option><option value="20">20</option><option value="25">25</option></select></label>
+            </div>
+            <div class="input-card card-elevated hidden" id="usd-design-loads-inputs">
+              <h3 class="input-card-title">Span &amp; Loads</h3>
+              <label><span class="label-text">L (m)</span><input type="number" id="usd-d-L" value="6" min="1" step="0.5"></label>
+              <label><span class="label-text">Support</span><select id="usd-d-support"><option value="simple">Simply supported</option><option value="cantilever">Cantilever</option></select></label>
+              <label><span class="label-text">DL (kN/m)</span><input type="number" id="usd-d-DL" value="15" min="0" step="0.5"></label>
+              <label><span class="label-text">DL point (kN)</span><input type="number" id="usd-d-DL-point" value="0" min="0" step="1"></label>
+              <label><span class="label-text">LL (kN/m)</span><input type="number" id="usd-d-LL" value="20" min="0" step="0.5"></label>
+              <label><span class="label-text">LL point (kN)</span><input type="number" id="usd-d-LL-point" value="0" min="0" step="1"></label>
+              <label><span class="label-text">f<sub>c</sub>′ (MPa)</span><input type="number" id="usd-d-fc-L" value="28" min="17" step="0.1"></label>
+              <label><span class="label-text">f<sub>y</sub> (MPa)</span><input type="number" id="usd-d-fy-L" value="420" min="280" step="1"></label>
+              <label><span class="label-text">Cover (mm)</span><input type="number" id="usd-d-cover" value="40" min="25" step="5"></label>
+              <label><span class="label-text">Stirrup φ (mm)</span><input type="number" id="usd-d-stirrup" value="10" min="8" step="2"></label>
+              <label><span class="label-text">D<sub>b</sub> (mm)</span><select id="usd-d-Db-L"><option value="16">16</option><option value="20">20</option><option value="25">25</option></select></label>
+            </div>
+          </div>
+          <div class="tab-input-content" id="input-doubly-analysis">
+            <div class="input-card card-elevated">
+              <h3 class="input-card-title">Material</h3>
+              <label><span class="label-text">f<sub>c</sub>′ (MPa)</span><input type="number" id="doubly-a-fc" value="28" min="17" step="0.1"></label>
+              <label><span class="label-text">f<sub>y</sub> (MPa)</span><input type="number" id="doubly-a-fy" value="420" min="280" step="1"></label>
+            </div>
+            <div class="input-card card-elevated">
+              <h3 class="input-card-title">Section</h3>
+              <label><span class="label-text">b (mm)</span><input type="number" id="doubly-a-b" value="300" min="100" step="10"></label>
+              <label><span class="label-text">h (mm)</span><input type="number" id="doubly-a-h" value="500" min="200" step="10"></label>
+              <label><span class="label-text">d (mm)</span><input type="number" id="doubly-a-d" value="450" min="100" step="10"></label>
+              <label><span class="label-text">d′ (mm)</span><input type="number" id="doubly-a-dp" value="60" min="40" step="5"></label>
+            </div>
+            <div class="input-card card-elevated">
+              <h3 class="input-card-title">Tension Steel</h3>
+              <label><span class="label-text">N<sub>b</sub></span><input type="number" id="doubly-a-Nb" value="5" min="1" step="1"></label>
+              <label><span class="label-text">D<sub>b</sub> (mm)</span><input type="number" id="doubly-a-Db" value="20" min="10" step="2"></label>
+            </div>
+            <div class="input-card card-elevated">
+              <h3 class="input-card-title">Compression Steel &amp; Load</h3>
+              <label><span class="label-text">N<sub>b</sub>′ (comp.)</span><input type="number" id="doubly-a-Nbc" value="2" min="0" step="1"></label>
+              <label><span class="label-text">D<sub>b</sub>′ (mm)</span><input type="number" id="doubly-a-Dbc" value="16" min="10" step="2"></label>
+              <label><span class="label-text">M<sub>u</sub> (kN·m)</span><input type="number" id="doubly-a-Mu" value="220" min="1" step="1"></label>
+            </div>
+          </div>
+          <div class="tab-input-content" id="input-doubly-design">
+            <div class="input-card card-elevated">
+              <h3 class="input-card-title">Section &amp; Material</h3>
+              <label><span class="label-text">b (mm)</span><input type="number" id="doubly-d-b" value="300" min="100" step="10"></label>
+              <label><span class="label-text">h (mm)</span><input type="number" id="doubly-d-h" value="500" min="200" step="10"></label>
+              <label><span class="label-text">d (mm)</span><input type="number" id="doubly-d-d" value="450" min="100" step="10"></label>
+              <label><span class="label-text">d′ (mm)</span><input type="number" id="doubly-d-dp" value="60" min="40" step="5"></label>
+              <label><span class="label-text">f<sub>c</sub>′ (MPa)</span><input type="number" id="doubly-d-fc" value="28" min="17" step="0.1"></label>
+              <label><span class="label-text">f<sub>y</sub> (MPa)</span><input type="number" id="doubly-d-fy" value="420" min="280" step="1"></label>
+            </div>
+            <div class="input-card card-elevated">
+              <h3 class="input-card-title">Load &amp; Bar Size</h3>
+              <label><span class="label-text">M<sub>u</sub> (kN·m)</span><input type="number" id="doubly-d-Mu" value="220" min="1" step="1"></label>
+              <label><span class="label-text">D<sub>b</sub> (mm)</span><select id="doubly-d-Db"><option value="16">16</option><option value="20" selected>20</option><option value="25">25</option></select></label>
+              <label><span class="label-text">D<sub>b</sub>′ (mm)</span><select id="doubly-d-Dbc"><option value="12">12</option><option value="16" selected>16</option><option value="20">20</option></select></label>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Panel 2: Beam visualization -->
+      <div class="panel panel-viz">
+        <div class="viz-card card-elevated">
+          <h3 class="viz-title">Beam cross-section</h3>
+          <div class="beam-viz-wrap" id="beam-viz-wrap">
+            <svg id="beam-dynamic-svg" class="beam-dynamic-svg" viewBox="0 0 280 320" xmlns="http://www.w3.org/2000/svg" aria-label="Beam cross-section diagram">
+              <defs>
+                <linearGradient id="vgConcrete" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#547792" stop-opacity="0.35"/><stop offset="100%" stop-color="#1A3263" stop-opacity="0.5"/></linearGradient>
+                <linearGradient id="vgSteel" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#FAB95B"/><stop offset="100%" stop-color="#e09a2e"/></linearGradient>
+                <linearGradient id="vgComp" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#547792"/><stop offset="100%" stop-color="#1A3263"/></linearGradient>
+              </defs>
+              <rect id="beam-rect" x="40" y="40" width="200" height="240" rx="4" fill="url(#vgConcrete)" stroke="currentColor" stroke-width="2"/>
+              <g id="beam-tension-bars"></g>
+              <g id="beam-compression-bars"></g>
+              <rect id="beam-comp-block" class="comp-block" x="40" y="40" width="200" height="0" rx="0" fill="url(#vgComp)" opacity="0.5" stroke="currentColor" stroke-dasharray="4 2"/>
+              <line x1="40" y1="280" x2="240" y2="280" stroke="currentColor" stroke-width="1"/>
+              <text x="140" y="298" text-anchor="middle" font-family="Poppins,sans-serif" font-size="12" font-weight="600">b</text>
+              <text x="258" y="165" text-anchor="middle" font-family="Poppins,sans-serif" font-size="12" font-weight="600" transform="rotate(90, 258, 165)">h</text>
+            </svg>
+          </div>
+          <p class="viz-caption" id="beam-viz-caption">Updates with section dimensions and reinforcement.</p>
+        </div>
+      </div>
+
+      <!-- Panel 3: Calculation output -->
+      <aside class="panel panel-output">
+        <div class="output-card card-elevated output-paper">
+          <h3 class="output-card-title">Calculation output</h3>
+          <div id="calculation-output" class="calculation-output" data-step-mode="true"></div>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <section class="about-section" id="about">
+    <div class="about-inner">
+      <h2 class="about-title">About</h2>
+      <p>This Reinforced Concrete Design (RCD) calculator performs analysis and design of rectangular beam sections per <strong>NSCP 2015</strong>, using Working Stress Design (WSD) and Ultimate Strength Design (USD). Use it for coursework or preliminary design. Always verify critical results with licensed engineers and official codes.</p>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <p>Reinforced Concrete Design Calculator — NSCP 2015 (WSD &amp; USD)</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
