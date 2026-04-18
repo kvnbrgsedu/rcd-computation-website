@@ -238,6 +238,86 @@ body::before {
   box-shadow: 0 4px 16px rgba(250, 185, 91, 0.35);
 }
 
+/* Main / sub tabs (NSCP USD layout) */
+.main-tabs,
+.sub-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.sub-tabs {
+  margin-bottom: 0.75rem;
+}
+
+.main-tab,
+.sub-tab {
+  padding: 0.6rem 1rem;
+  border: 2px solid var(--card-border);
+  border-radius: 10px;
+  background: var(--card-bg);
+  color: var(--text);
+  font-family: 'Poppins', sans-serif;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px var(--shadow);
+}
+
+.main-tab:hover,
+.sub-tab:hover {
+  border-color: var(--secondary);
+  transform: translateY(-2px);
+}
+
+.main-tab.active,
+.sub-tab.active {
+  background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+  border-color: var(--accent);
+  color: var(--primary-dark);
+  box-shadow: 0 4px 16px rgba(250, 185, 91, 0.35);
+}
+
+.mode-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: center;
+  margin: 0.5rem 0 1rem;
+}
+
+.mode-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.45rem 0.85rem;
+  border-radius: 8px;
+  border: 1px solid var(--card-border);
+  font-size: 0.88rem;
+  font-weight: 500;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.35);
+}
+
+[data-theme="dark"] .mode-tab {
+  background: rgba(30, 41, 59, 0.6);
+}
+
+.mode-tab input {
+  margin: 0;
+  cursor: pointer;
+}
+
+.main-panel.hidden {
+  display: none !important;
+}
+
+.singly-block {
+  margin-top: 0.25rem;
+}
+
 .toolbar-controls {
   display: flex;
   align-items: center;
@@ -686,7 +766,9 @@ body::before {
     padding: 0.45rem 0.7rem;
     font-size: 0.82rem;
   }
-  .topic-tab {
+  .topic-tab,
+  .main-tab,
+  .sub-tab {
     padding: 0.5rem 0.85rem;
     font-size: 0.8rem;
   }
