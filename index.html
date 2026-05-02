@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,59 +11,87 @@
 </head>
 <body>
   <nav class="nav-glass" id="nav-glass">
+    <button type="button" id="toggle-theme" class="nav-theme-toggle is-dark" aria-label="Switch to light mode" title="Dark / light theme">
+      <span class="nav-theme-icon nav-theme-icon-moon" aria-hidden="true">
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </span>
+      <span class="nav-theme-icon nav-theme-icon-sun" aria-hidden="true">
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+      </span>
+    </button>
     <div class="nav-inner">
       <a href="#hero" class="nav-link">Home</a>
       <a href="#calculator" class="nav-link" data-main="singly">Singly Reinforced</a>
-      <a href="#calculator" class="nav-link" data-main="doubly">Doubly Reinforced</a>
+      <a href="#calculator" class="nav-link" data-main="doubly">Doubly</a>
       <a href="#about" class="nav-link">About</a>
     </div>
   </nav>
 
   <header class="hero" id="hero">
-    <div class="hero-bg-pattern"></div>
-    <div class="hero-content">
-      <h1 class="hero-title">Reinforced Concrete Design Calculator</h1>
-      <p class="hero-subtitle">NSCP 2015 — Ultimate Strength Design (USD) for rectangular and T-beams.</p>
-      <p class="hero-desc">Real-time flexural checks and design: singly reinforced rectangular and T-sections, and doubly reinforced rectangular beams. All limits follow NSCP 2015 strain and strength reduction rules.</p>
+    <div id="hero-structure" class="hero-structure">
+      <div class="hero-glass">
+        <h1 class="hero-title">REINFORCED CONCRETE DESIGN CALCULATOR</h1>
+        <p class="hero-subtitle">NSCP 2015 — Analysis and Design for rectangular and T-beams.</p>
+        <p class="hero-desc">Real-time flexural checks and design: singly reinforced rectangular and T-sections, and doubly reinforced rectangular beams. All limits follow NSCP 2015 strain and strength reduction rules.</p>
+      </div>
     </div>
   </header>
 
   <main id="calculator" class="calculator-section">
     <div class="calculator-toolbar">
-      <div id="main-tabs" class="main-tabs" role="tablist">
-        <button type="button" class="main-tab active" data-main="singly" role="tab">1. Singly Reinforced Beam</button>
-        <button type="button" class="main-tab" data-main="doubly" role="tab">2. Doubly Reinforced Beam</button>
-      </div>
-      <div class="toolbar-controls">
-        <label class="toggle-wrap" title="Step-by-step vs result only">
-          <span class="toggle-label">Step-by-step</span>
-          <input type="checkbox" id="toggle-step-mode" class="toggle-input" checked>
-          <span class="toggle-slider"></span>
-        </label>
-        <label class="toggle-wrap" title="Dark mode">
-          <span class="toggle-label">Dark</span>
-          <input type="checkbox" id="toggle-dark" class="toggle-input">
-          <span class="toggle-slider"></span>
-        </label>
+      <div class="toolbar-cluster unified-toolbar-cluster">
+        <div class="toolbar-main-tabs-scroll">
+          <div id="main-tabs" class="main-tabs tab-capsule" role="tablist">
+            <button type="button" class="main-tab" data-main="singly" role="tab">Singly Reinforced Beam</button>
+            <button type="button" class="main-tab" data-main="doubly" role="tab">Doubly Reinforced Beam</button>
+          </div>
+        </div>
+
+        <div id="unified-singly-toolbar" class="unified-context-toolbar hidden">
+          <div id="singly-types" class="sub-tabs tab-capsule" role="tablist">
+            <button type="button" class="sub-tab" data-singly="rect">Rectangular Beam</button>
+            <button type="button" class="sub-tab" data-singly="tbeam">T-Beam</button>
+          </div>
+          <div class="singly-cluster-modes">
+            <div id="singly-rect-mode-row" class="singly-mode-row">
+              <div id="rectangular-modes" class="mode-tabs tab-capsule" role="tablist">
+                <label class="mode-tab"><input type="radio" name="rect-mode" value="analysis" checked> Analysis</label>
+                <label class="mode-tab"><input type="radio" name="rect-mode" value="design"> Design</label>
+              </div>
+            </div>
+            <div id="singly-tbeam-mode-row" class="singly-mode-row hidden">
+              <div id="tbeam-modes" class="mode-tabs tab-capsule" role="tablist">
+                <label class="mode-tab"><input type="radio" name="tbeam-mode" value="analysis" checked> Analysis</label>
+                <label class="mode-tab"><input type="radio" name="tbeam-mode" value="design"> Design</label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="unified-doubly-toolbar" class="unified-context-toolbar hidden">
+          <div id="doubly-modes" class="mode-tabs tab-capsule" role="tablist">
+            <label class="mode-tab"><input type="radio" name="doubly-mode" value="analysis" checked> Analysis</label>
+            <label class="mode-tab"><input type="radio" name="doubly-mode" value="design"> Design</label>
+          </div>
+        </div>
       </div>
     </div>
 
+    <div class="calculator-workspace-shell">
     <div class="three-panel">
       <aside class="panel panel-input">
         <div class="panel-inner input-cards" id="input-cards-container">
     <!-- ========== SINGLY REINFORCED ========== -->
     <div id="panel-singly" class="main-panel active">
-      <div id="singly-types" class="sub-tabs" role="tablist">
-        <button type="button" class="sub-tab active" data-singly="rect">Rectangular Beam</button>
-        <button type="button" class="sub-tab" data-singly="tbeam">T-Beam</button>
+
+      <div id="singly-beam-placeholder" class="singly-block hidden">
+        <div class="input-card card-elevated">
+          <p class="singly-placeholder-hint">In the toolbar, pick <strong>Rectangular Beam</strong> or <strong>T‑Beam</strong>.</p>
+        </div>
       </div>
 
       <!-- Rectangular -->
-      <div id="singly-rect-block" class="singly-block">
-        <div id="rectangular-modes" class="mode-tabs" role="tablist">
-          <label class="mode-tab"><input type="radio" name="rect-mode" value="analysis" checked> A. Analysis</label>
-          <label class="mode-tab"><input type="radio" name="rect-mode" value="design"> B. Design</label>
-        </div>
+      <div id="singly-rect-block" class="singly-block hidden">
         <div id="input-rect-analysis" class="tab-input-content mode-input active">
           <div class="input-card card-elevated">
             <h3 class="input-card-title">Rectangular — Analysis (USD)</h3>
@@ -100,10 +128,6 @@
 
       <!-- T-Beam -->
       <div id="singly-tbeam-block" class="singly-block hidden">
-        <div id="tbeam-modes" class="mode-tabs" role="tablist">
-          <label class="mode-tab"><input type="radio" name="tbeam-mode" value="analysis" checked> A. Analysis</label>
-          <label class="mode-tab"><input type="radio" name="tbeam-mode" value="design"> B. Design</label>
-        </div>
         <div id="input-tbeam-analysis" class="tab-input-content mode-input active">
           <div class="input-card card-elevated">
             <h3 class="input-card-title">T-Beam — Analysis (USD)</h3>
@@ -136,10 +160,6 @@
 
     <!-- ========== DOUBLY REINFORCED ========== -->
     <div id="panel-doubly" class="main-panel hidden">
-      <div id="doubly-modes" class="mode-tabs" role="tablist">
-        <label class="mode-tab"><input type="radio" name="doubly-mode" value="analysis" checked> 1. Analysis</label>
-        <label class="mode-tab"><input type="radio" name="doubly-mode" value="design"> 2. Design</label>
-      </div>
       <div id="input-doubly-analysis" class="tab-input-content mode-input active">
         <div class="input-card card-elevated">
           <h3 class="input-card-title">Doubly — Analysis</h3>
@@ -210,21 +230,53 @@
       <aside class="panel panel-output">
         <div class="output-card card-elevated output-paper">
           <h3 class="output-card-title">Calculation output</h3>
-          <div id="calculation-output" class="calculation-output" data-step-mode="true"></div>
+          <div id="calculation-output" class="calculation-output"></div>
         </div>
       </aside>
     </div>
+    </div>
   </main>
 
-  <section class="about-section" id="about">
-    <div class="about-inner">
-      <h2 class="about-title">About</h2>
-      <p>This tool applies <strong>NSCP 2015 Ultimate Strength Design</strong> for flexure of rectangular and T-shaped singly reinforced beams and rectangular doubly reinforced beams. It is intended for education and preliminary sizing only. Verify with a licensed professional engineer.</p>
+  <section class="about-showcase" id="about" aria-labelledby="about-tool-heading">
+    <div class="about-showcase-inner">
+      <div id="about-structure" class="about-structure">
+        <article class="about-desc-glass about-animate-target">
+          <h2 id="about-tool-heading" class="about-desc-title">About This Tool</h2>
+          <p class="about-desc-text">This tool applies NSCP 2015 Ultimate Strength Design for flexure of rectangular and T-shaped singly reinforced beams and rectangular doubly reinforced beams. It is intended for education and preliminary sizing only. Verify with a licensed professional engineer.</p>
+        </article>
+
+        <div class="about-team-block">
+          <h2 class="about-team-heading about-animate-target">Developed By</h2>
+          <div class="about-team-grid">
+            <article class="about-dev-card about-animate-target">
+              <div class="about-dev-photo-wrap">
+                <img class="about-dev-photo" src="images/developers/vasquez.png" width="120" height="120" alt="Portrait of Mark Dave B. Vasquez">
+              </div>
+              <h3 class="about-dev-name">Mark Dave B. Vasquez, SO2</h3>
+              <p class="about-dev-course">BS Civil Engineering <span class="about-dev-section">3A2</span></p>
+            </article>
+            <article class="about-dev-card about-animate-target">
+              <div class="about-dev-photo-wrap">
+                <img class="about-dev-photo" src="images/developers/bien.png" width="120" height="120" alt="Portrait of Carl Leo H. Bien">
+              </div>
+              <h3 class="about-dev-name">Carl Leo H. Bien, SO2</h3>
+              <p class="about-dev-course">BS Civil Engineering <span class="about-dev-section">3A2</span></p>
+            </article>
+            <article class="about-dev-card about-animate-target">
+              <div class="about-dev-photo-wrap">
+                <img class="about-dev-photo" src="images/developers/asanza.png" width="120" height="120" alt="Portrait of John Kerby L. Asanza">
+              </div>
+              <h3 class="about-dev-name">John Kerby L. Asanza, SO2</h3>
+              <p class="about-dev-course">BS Civil Engineering <span class="about-dev-section">3A2</span></p>
+            </article>
+          </div>
+        </div>
+      </div>
     </div>
   </section>
 
   <footer class="footer">
-    <p>RCD Calculator — NSCP 2015 (USD)</p>
+    <p>RCD Calculator — NSCP 2015 </p>
   </footer>
 
   <script src="script.js"></script>

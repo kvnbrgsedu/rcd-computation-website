@@ -16,9 +16,10 @@
     const v = getEl(id);
     return v ? (parseFloat(v.value) || def) : def;
   }
-  function fmt(n, d = 2) {
+  /** Up to `d` fraction digits; whole numbers show without decimals (e.g. 213 not 213.000). */
+  function fmt(n, d = 3) {
     if (n === undefined || n === null || isNaN(n)) return '—';
-    return Number(n).toLocaleString('en', { minimumFractionDigits: d, maximumFractionDigits: d });
+    return Number(n).toLocaleString('en', { minimumFractionDigits: 0, maximumFractionDigits: d });
   }
 
   function beta1(fc) {
@@ -48,7 +49,7 @@
   }
   function getSinglyType() {
     const t = document.querySelector('.sub-tab.active');
-    return t ? t.dataset.singly : 'rect';
+    return t ? t.dataset.singly : null;
   }
   function getRectMode() {
     const r = document.querySelector('input[name="rect-mode"]:checked');
@@ -66,8 +67,26 @@
   function getContextKey() {
     const main = getMain();
     if (main === 'doubly') return `doubly-${getDoublyMode()}`;
-    if (getSinglyType() === 'rect') return `rect-${getRectMode()}`;
+    const st = getSinglyType();
+    if (!st) return 'singly-pick-type';
+    if (st === 'rect') return `rect-${getRectMode()}`;
     return `tbeam-${getTBeamMode()}`;
+  }
+
+  /** Progressive toolbar: main-only → singly row → singly modes | doubly modes */
+  let toolbarReveal = 'main';
+
+  function syncToolbarReveal() {
+    const unifiedSingly = getEl('unified-singly-toolbar');
+    const unifiedDoubly = getEl('unified-doubly-toolbar');
+    const clusterModes = document.querySelector('.singly-cluster-modes');
+    const showSinglyBar = toolbarReveal === 'singly-types' || toolbarReveal === 'singly-full';
+    const showDoublyBar = toolbarReveal === 'doubly-full';
+    const showSinglyModes = toolbarReveal === 'singly-full';
+
+    if (unifiedSingly) unifiedSingly.classList.toggle('hidden', !showSinglyBar);
+    if (unifiedDoubly) unifiedDoubly.classList.toggle('hidden', !showDoublyBar);
+    if (clusterModes) clusterModes.classList.toggle('hidden', !showSinglyModes);
   }
 
   function refreshPanels() {
@@ -79,10 +98,20 @@
 
     const rectBlock = getEl('singly-rect-block');
     const tBlock = getEl('singly-tbeam-block');
+    const beamPh = getEl('singly-beam-placeholder');
     if (main === 'singly' && rectBlock && tBlock) {
       const st = getSinglyType();
+      if (beamPh) beamPh.classList.toggle('hidden', !!st);
       rectBlock.classList.toggle('hidden', st !== 'rect');
       tBlock.classList.toggle('hidden', st !== 'tbeam');
+      const rectModesRow = getEl('singly-rect-mode-row');
+      const tbeamModesRow = getEl('singly-tbeam-mode-row');
+      if (rectModesRow && tbeamModesRow) {
+        rectModesRow.classList.toggle('hidden', st !== 'rect');
+        tbeamModesRow.classList.toggle('hidden', st !== 'tbeam');
+      }
+    } else if (beamPh) {
+      beamPh.classList.add('hidden');
     }
 
     if (main === 'singly' && getSinglyType() === 'rect') {
@@ -97,6 +126,8 @@
       const m = getDoublyMode();
       toggleModeInputs('input-doubly-analysis', 'input-doubly-design', m === 'analysis');
     }
+
+    syncToolbarReveal();
   }
 
   function toggleModeInputs(idA, idB, showA) {
@@ -151,8 +182,8 @@
     html += `<div class="calc-step"><div class="calc-step-title">Rectangular beam — Analysis (NSCP 2015 USD)</div><div class="calc-step-equation">Given: b = ${fmt(r.b)}, h = ${fmt(r.h)}, d = ${fmt(r.d)}, f<sub>c</sub>′ = ${fmt(r.fc)}, f<sub>y</sub> = ${fmt(r.fy)}, N<sub>b</sub> = ${r.Nb}, D<sub>b</sub> = ${fmt(r.Db)} mm</div></div>`;
     const steelCond = r.et >= r.ety ? '✔ Steel yields' : '⚠ Not yielding';
     html += `<div class="calc-step"><div class="calc-step-title">1) Check for p (p<sub>min</sub>, p<sub>act</sub>, p<sub>max</sub>)</div><div class="calc-step-equation">A<sub>s</sub> = N<sub>b</sub>πD<sub>b</sub>²/4 = ${fmt(r.As)} mm²</div><div class="calc-step-equation">p<sub>min</sub> = max(0.25√f<sub>c</sub>′/f<sub>y</sub>, 1.4/f<sub>y</sub>) = ${fmt(r.rhoMin, 4)}</div><div class="calc-step-equation">p<sub>act</sub> = A<sub>s</sub>/(bd) = ${fmt(r.rho, 4)}</div><div class="calc-step-equation">p<sub>max</sub> = (3/7) β<sub>1</sub>(0.85 f<sub>c</sub>′ / f<sub>y</sub>) = ${fmt(r.rhoMax, 4)}</div><div class="calc-step-equation"><span class="calc-step-result">${steelCond}</span></div></div>`;
-    html += `<div class="calc-step"><div class="calc-step-title">2) Solve for a, c, ε<sub>t</sub></div><div class="calc-step-equation">β<sub>1</sub> = ${fmt(r.b1, 3)}, a = A<sub>s</sub>f<sub>y</sub>/(0.85f<sub>c</sub>′b) = ${fmt(r.a)} mm, c = a/β<sub>1</sub> = ${fmt(r.c)} mm, ε<sub>t</sub> = ${fmt(r.et, 4)}</div></div>`;
-    html += `<div class="calc-step"><div class="calc-step-title">3) Compute for Moment Capacity (M<sub>u</sub>)</div><div class="calc-step-equation">M<sub>n</sub> = ${fmt(r.Mn / 1e6)} kN·m; φ = ${fmt(r.phi, 2)}; φM<sub>n</sub> = ${fmt(phiMnKnm)} kN·m; <span class="calc-step-result">M<sub>u</sub> = ${fmt(r.Mu_kNm)} kN·m</span></div></div>`;
+    html += `<div class="calc-step"><div class="calc-step-title">2) Solve for a, c, ε<sub>t</sub></div><div class="calc-step-equation">β<sub>1</sub> = ${fmt(r.b1)}, a = A<sub>s</sub>f<sub>y</sub>/(0.85f<sub>c</sub>′b) = ${fmt(r.a)} mm, c = a/β<sub>1</sub> = ${fmt(r.c)} mm, ε<sub>t</sub> = ${fmt(r.et, 4)}</div></div>`;
+    html += `<div class="calc-step"><div class="calc-step-title">3) Compute for Moment Capacity (M<sub>u</sub>)</div><div class="calc-step-equation">M<sub>n</sub> = ${fmt(r.Mn / 1e6)} kN·m; φ = ${fmt(r.phi)}; φM<sub>n</sub> = ${fmt(phiMnKnm)} kN·m; <span class="calc-step-result">M<sub>u</sub> = ${fmt(r.Mu_kNm)} kN·m</span></div></div>`;
     out.innerHTML = html;
   }
 
@@ -293,7 +324,7 @@
     html += `<div class="calc-step"><div class="calc-step-title">4) Solve for A<sub>s</sub> and no. of rebars</div><div class="calc-step-equation">p = A<sub>s</sub>/(bd)</div><div class="calc-step-equation">A<sub>s,req</sub> = pbd = ${fmt(r.AsReq)} mm²</div><div class="calc-step-equation">A<sub>s</sub> = n(πD<sub>b</sub>²/4) = ${fmt(r.AsActual)} mm²</div><div class="calc-step-equation">n<sub>b</sub> = <span class=\"calc-step-result\">${r.nb} bars</span></div></div>`;
     html += `<div class="calc-step"><div class="calc-step-title">5) Recheck p ratio (p<sub>min</sub>, p, p<sub>max</sub>)</div><div class="calc-step-equation">p<sub>min</sub> = ${fmt(r.rhoMin, 4)}, p<sub>actual</sub> = ${fmt(r.rhoActual, 4)}, p<sub>max</sub> = ${fmt(r.rhoMax, 4)}</div></div>`;
     const steelCond = r.steelYields ? '✔ Steel yields' : '⚠ Not yielding / compression-controlled';
-    html += `<div class="calc-step"><div class="calc-step-title">6) Compute for a, c, ε<sub>t</sub></div><div class="calc-step-equation">a = ${fmt(r.a)} mm; c = ${fmt(r.c)} mm; ε<sub>t</sub> = ${fmt(r.et, 4)}; φ = ${fmt(r.phi, 2)}</div><div class="calc-step-equation"><span class=\"calc-step-result\">${steelCond}</span></div></div>`;
+    html += `<div class="calc-step"><div class="calc-step-title">6) Compute for a, c, ε<sub>t</sub></div><div class="calc-step-equation">a = ${fmt(r.a)} mm; c = ${fmt(r.c)} mm; ε<sub>t</sub> = ${fmt(r.et, 4)}; φ = ${fmt(r.phi)}</div><div class="calc-step-equation"><span class=\"calc-step-result\">${steelCond}</span></div></div>`;
     html += `<div class="calc-step"><div class="calc-step-title">7) Compute for moment capacity (M<sub>u</sub>)</div><div class="calc-step-equation">M<sub>n</sub> = ${fmt(r.Mn / 1e6)} kN·m; φM<sub>n</sub> = <span class=\"calc-step-result\">${fmt(r.phiMn / 1e6)} kN·m</span> (moment capacity)</div></div>`;
     const cls = r.safe ? 'verification-ok' : 'verification-warn';
     html += `<div class="calc-step ${cls}"><div class="calc-step-title">21 Final result</div><div class="calc-step-result">${r.safe ? 'SAFE ✔' : 'NOT SAFE ❌'} (φM<sub>n</sub> ${r.safe ? '≥' : '&lt;'} M<sub>u</sub>${r.overReinforced ? '; ρ<sub>req</sub> > ρ<sub>max</sub>' : ''}${r.overActualMax ? '; ρ<sub>actual</sub> > ρ<sub>max</sub>' : ''}${!r.steelYields ? '; steel not yielding (ε<sub>t</sub> < ε<sub>y</sub>)' : ''})</div></div>`;
@@ -485,13 +516,13 @@
 
     if (r.flangeOnly) {
       html += `<div class="calc-step"><div class="calc-step-title">False T beam</div><div class="calc-step-equation">a = ${fmt(r.a)} mm ≤ h<sub>f</sub> = ${fmt(r.hf)} mm</div></div>`;
-      html += `<div class="calc-step"><div class="calc-step-title">1) Solve for M<sub>n</sub> and R<sub>n</sub> (assume φ = 0.9)</div><div class="calc-step-equation">M<sub>n</sub> = M<sub>u</sub>/0.9 = ${fmt(MnReq_Nmm / 1e6)} kN·m; R<sub>n</sub> = M<sub>n</sub>/(b<sub>f</sub>d²) = ${fmt(Rn, 4)}</div></div>`;
-      html += `<div class="calc-step"><div class="calc-step-title">2) Solve for p</div><div class="calc-step-equation">p = (0.85f<sub>c</sub>′/f<sub>y</sub>)(1-√(1-2R<sub>n</sub>/(0.85f<sub>c</sub>′))) = ${fmt(p, 5)}</div></div>`;
+      html += `<div class="calc-step"><div class="calc-step-title">1) Solve for M<sub>n</sub> and R<sub>n</sub> (assume φ = 0.9)</div><div class="calc-step-equation">M<sub>n</sub> = M<sub>u</sub>/0.9 = ${fmt(MnReq_Nmm / 1e6)} kN·m; R<sub>n</sub> = M<sub>n</sub>/(b<sub>f</sub>d²) = ${fmt(Rn)}</div></div>`;
+      html += `<div class="calc-step"><div class="calc-step-title">2) Solve for p</div><div class="calc-step-equation">p = (0.85f<sub>c</sub>′/f<sub>y</sub>)(1-√(1-2R<sub>n</sub>/(0.85f<sub>c</sub>′))) = ${fmt(p, 4)}</div></div>`;
       html += `<div class="calc-step"><div class="calc-step-title">3) Solve for a</div><div class="calc-step-equation">A<sub>s</sub> = p b<sub>f</sub>d = ${fmt(AsFromP)} mm²; a = A<sub>s</sub>f<sub>y</sub>/(0.85f<sub>c</sub>′b<sub>f</sub>) = ${fmt(r.a)} mm (false T beam because a &lt; h<sub>f</sub>)</div></div>`;
       html += `<div class="calc-step"><div class="calc-step-title">4) Solve no. of rebars</div><div class="calc-step-equation">p = A<sub>s</sub>/(b<sub>f</sub>d); A<sub>s</sub> = (π/4)D<sub>b</sub>²n → n = <span class="calc-step-result">${r.Nb}</span>, A<sub>s</sub> = ${fmt(r.As)} mm²</div></div>`;
       html += `<div class="calc-step"><div class="calc-step-title">5) Check steel ratio (p<sub>min</sub>, p)</div><div class="calc-step-equation">p<sub>min</sub> = ${fmt(pmin, 4)}; p = ${fmt(r.rho, 4)}; <span class="calc-step-result">${r.rho > pmin ? '✔ p > pmin SAFE' : '⚠ p ≤ pmin NOT SAFE'}</span></div></div>`;
       html += `<div class="calc-step"><div class="calc-step-title">6) Solve A<sub>c</sub> and flange area check</div><div class="calc-step-equation">A<sub>c</sub> = A<sub>s</sub>f<sub>y</sub>/(0.85f<sub>c</sub>′) = ${fmt(Ac)} mm²; A<sub>f</sub> = b<sub>f</sub>h<sub>f</sub> = ${fmt(Af)} mm²; ${Ac < Af ? '✔ A<sub>c</sub> < A<sub>f</sub> (false T beam)' : '⚠ A<sub>c</sub> ≥ A<sub>f</sub>'}</div></div>`;
-      html += `<div class="calc-step"><div class="calc-step-title">7) Solve for a, c, ε<sub>t</sub> and reduction factor</div><div class="calc-step-equation">A<sub>c</sub> = a(b<sub>f</sub>); c = a/β<sub>1</sub> = ${fmt(r.c)} mm; ε<sub>t</sub> = ${(fmt(r.et, 4))}; φ = ${fmt(r.phi, 2)} (${r.et >= ety ? 'steel yields' : 'steel not yielding'})</div></div>`;
+      html += `<div class="calc-step"><div class="calc-step-title">7) Solve for a, c, ε<sub>t</sub> and reduction factor</div><div class="calc-step-equation">A<sub>c</sub> = a(b<sub>f</sub>); c = a/β<sub>1</sub> = ${fmt(r.c)} mm; ε<sub>t</sub> = ${(fmt(r.et, 4))}; φ = ${fmt(r.phi)} (${r.et >= ety ? 'steel yields' : 'steel not yielding'})</div></div>`;
       html += `<div class="calc-step"><div class="calc-step-title">8) Solve for M<sub>u</sub> capacity (false T beam)</div><div class="calc-step-equation">M<sub>u,cap</sub> = φ(A<sub>s</sub>f<sub>y</sub>(d-a/2)) = <span class="calc-step-result">${fmt(r.phiMn / 1e6)} kN·m</span></div></div>`;
     } else {
       const Asf = 0.85 * r.fc * r.hf * (r.bf - r.bw) / r.fy;
@@ -504,15 +535,15 @@
       const Asw = isNaN(pw) ? NaN : pw * r.bw * r.d;
       const AsTotCalc = Asf + (isNaN(Asw) ? 0 : Asw);
       html += `<div class="calc-step"><div class="calc-step-title">True T beam</div><div class="calc-step-equation">a = ${fmt(r.a)} mm > h<sub>f</sub> = ${fmt(r.hf)} mm</div></div>`;
-      html += `<div class="calc-step"><div class="calc-step-title">1) Solve for M<sub>n</sub> and R<sub>n</sub> (assume φ = 0.9)</div><div class="calc-step-equation">M<sub>n</sub> = M<sub>u</sub>/0.9 = ${fmt(MnReq / 1e6)} kN·m; R<sub>n</sub> = M<sub>n</sub>/(b<sub>f</sub>d²) = ${fmt(Rn, 4)}</div></div>`;
-      html += `<div class="calc-step"><div class="calc-step-title">2) Solve for p</div><div class="calc-step-equation">p = (0.85f<sub>c</sub>′/f<sub>y</sub>)(1-√(1-2R<sub>n</sub>/(0.85f<sub>c</sub>′))) = ${fmt(p, 5)}</div></div>`;
+      html += `<div class="calc-step"><div class="calc-step-title">1) Solve for M<sub>n</sub> and R<sub>n</sub> (assume φ = 0.9)</div><div class="calc-step-equation">M<sub>n</sub> = M<sub>u</sub>/0.9 = ${fmt(MnReq / 1e6)} kN·m; R<sub>n</sub> = M<sub>n</sub>/(b<sub>f</sub>d²) = ${fmt(Rn)}</div></div>`;
+      html += `<div class="calc-step"><div class="calc-step-title">2) Solve for p</div><div class="calc-step-equation">p = (0.85f<sub>c</sub>′/f<sub>y</sub>)(1-√(1-2R<sub>n</sub>/(0.85f<sub>c</sub>′))) = ${fmt(p, 4)}</div></div>`;
       html += `<div class="calc-step"><div class="calc-step-title">3) Solve for a</div><div class="calc-step-equation">A<sub>s</sub> = p b<sub>f</sub>d = ${fmt(AsFromP)} mm²; a = A<sub>s</sub>f<sub>y</sub>/(0.85f<sub>c</sub>′b<sub>f</sub>) = ${fmt(r.a)} mm (true T beam because a > h<sub>f</sub>)</div></div>`;
       html += `<div class="calc-step"><div class="calc-step-title">4) Compute for Moment Capacity components</div><div class="calc-step-equation">A<sub>sf</sub> = 0.85f<sub>c</sub>′h<sub>f</sub>(b<sub>f</sub>-b<sub>w</sub>)/f<sub>y</sub> = ${fmt(Asf)} mm²; M<sub>nf</sub> = A<sub>sf</sub>f<sub>y</sub>(d-h<sub>f</sub>/2) = ${fmt(Mnf / 1e6)} kN·m</div></div>`;
       html += `<div class="calc-step"><div class="calc-step-title">5) Solve required moment in web</div><div class="calc-step-equation">M<sub>n</sub> = M<sub>nf</sub> + M<sub>nw</sub>; M<sub>nw</sub> = M<sub>n</sub> - M<sub>nf</sub> = ${fmt(Mnw / 1e6)} kN·m</div></div>`;
-      html += `<div class="calc-step"><div class="calc-step-title">6) Compute no. of rebars</div><div class="calc-step-equation">R<sub>nw</sub> = M<sub>nw</sub>/(b<sub>w</sub>d²) = ${fmt(Rnw, 4)}; p<sub>w</sub> = (0.85f<sub>c</sub>′/f<sub>y</sub>)(1-√(1-2R<sub>nw</sub>/(0.85f<sub>c</sub>′))) = ${fmt(pw, 5)}</div><div class="calc-step-equation">A<sub>sw</sub> = p<sub>w</sub>b<sub>w</sub>d = ${fmt(Asw)} mm²; A<sub>s</sub> = A<sub>sw</sub>+A<sub>sf</sub> = ${fmt(AsTotCalc)} mm²; A<sub>s</sub> = (π/4)D<sub>b</sub>²n → n = <span class="calc-step-result">${r.Nb}</span></div></div>`;
+      html += `<div class="calc-step"><div class="calc-step-title">6) Compute no. of rebars</div><div class="calc-step-equation">R<sub>nw</sub> = M<sub>nw</sub>/(b<sub>w</sub>d²) = ${fmt(Rnw)}; p<sub>w</sub> = (0.85f<sub>c</sub>′/f<sub>y</sub>)(1-√(1-2R<sub>nw</sub>/(0.85f<sub>c</sub>′))) = ${fmt(pw, 4)}</div><div class="calc-step-equation">A<sub>sw</sub> = p<sub>w</sub>b<sub>w</sub>d = ${fmt(Asw)} mm²; A<sub>s</sub> = A<sub>sw</sub>+A<sub>sf</sub> = ${fmt(AsTotCalc)} mm²; A<sub>s</sub> = (π/4)D<sub>b</sub>²n → n = <span class="calc-step-result">${r.Nb}</span></div></div>`;
       html += `<div class="calc-step"><div class="calc-step-title">7) Check steel ratio (p<sub>min</sub>, p)</div><div class="calc-step-equation">p<sub>min</sub> = ${fmt(pmin, 4)}; p = A<sub>s</sub>/(b<sub>w</sub>d) = ${fmt(r.rho, 4)}; <span class="calc-step-result">${r.rho > pmin ? '✔ p > pmin SAFE' : '⚠ p ≤ pmin NOT SAFE'}</span></div></div>`;
       html += `<div class="calc-step"><div class="calc-step-title">8) Solve A<sub>c</sub> and flange check</div><div class="calc-step-equation">A<sub>c</sub> = A<sub>s</sub>f<sub>y</sub>/(0.85f<sub>c</sub>′) = ${fmt(Ac)} mm²; A<sub>f</sub> = ${fmt(Af)} mm²; ${Ac > Af ? '✔ A<sub>c</sub> > A<sub>f</sub> (true T beam)' : '⚠ A<sub>c</sub> ≤ A<sub>f</sub>'}</div></div>`;
-      html += `<div class="calc-step"><div class="calc-step-title">9) Solve for a, c, ε<sub>t</sub></div><div class="calc-step-equation">A<sub>c</sub> = 2(b<sub>f</sub>-b<sub>w</sub>)h<sub>f</sub> + b<sub>w</sub>a; c = a/β<sub>1</sub> = ${fmt(r.c)} mm; ε<sub>t</sub> = ${fmt(r.et, 4)}; φ = ${fmt(r.phi, 2)}</div></div>`;
+      html += `<div class="calc-step"><div class="calc-step-title">9) Solve for a, c, ε<sub>t</sub></div><div class="calc-step-equation">A<sub>c</sub> = 2(b<sub>f</sub>-b<sub>w</sub>)h<sub>f</sub> + b<sub>w</sub>a; c = a/β<sub>1</sub> = ${fmt(r.c)} mm; ε<sub>t</sub> = ${fmt(r.et, 4)}; φ = ${fmt(r.phi)}</div></div>`;
       html += `<div class="calc-step"><div class="calc-step-title">10) Solve for M<sub>u</sub> capacity (true T beam)</div><div class="calc-step-equation">M<sub>u,cap</sub> = φ[0.85f<sub>c</sub>′·2(b<sub>f</sub>-b<sub>w</sub>)h<sub>f</sub>(d-h<sub>f</sub>/2) + 0.85f<sub>c</sub>′·A<sub>c,web</sub>(d-a/2)] = <span class="calc-step-result">${fmt(r.phiMn / 1e6)} kN·m</span></div></div>`;
     }
     const cls = r.safe ? 'verification-ok' : 'verification-warn';
@@ -611,7 +642,7 @@
     } else {
       html += `<div class="calc-step"><div class="calc-step-title">5) Both steel yield; proceed</div><div class="calc-step-equation">Use f<sub>s</sub>′ = f<sub>y</sub></div></div>`;
     }
-    html += `<div class="calc-step"><div class="calc-step-title">6) Compute reduction factor and M<sub>u</sub> capacity</div><div class="calc-step-equation">φ from strain = ${fmt(r.phi, 2)}</div><div class="calc-step-equation">M<sub>u,cap</sub> = φ(0.85f<sub>c</sub>′ab(d-a/2)+A<sub>s</sub>′f<sub>s</sub>′(d-d′)) = <span class="calc-step-result">${fmt(phiMnKnm)} kN·m</span></div></div>`;
+    html += `<div class="calc-step"><div class="calc-step-title">6) Compute reduction factor and M<sub>u</sub> capacity</div><div class="calc-step-equation">φ from strain = ${fmt(r.phi)}</div><div class="calc-step-equation">M<sub>u,cap</sub> = φ(0.85f<sub>c</sub>′ab(d-a/2)+A<sub>s</sub>′f<sub>s</sub>′(d-d′)) = <span class="calc-step-result">${fmt(phiMnKnm)} kN·m</span></div></div>`;
     html += `<div class="calc-step verification-ok"><div class="calc-step-title">Final</div><div class="calc-step-result">M<sub>u</sub> (capacity) = ${fmt(r.Mu_kNm)} kN·m</div></div>`;
     out.innerHTML = html;
   }
@@ -715,12 +746,12 @@
     }
     const MnKnm = r.Mn_req / 1e6;
     let html = '';
-    html += `<div class="calc-step"><div class="calc-step-title">Doubly reinforced — Design (using M<sub>u</sub>)</div><div class="calc-step-equation">M<sub>u,req</sub> = ${fmt(r.Mu_kNm)} kN·m; b = ${fmt(r.b)} mm; d = ${fmt(r.d)} mm; d′ = ${fmt(r.dp)} mm; f<sub>c</sub>′ = ${fmt(r.fc)} MPa; f<sub>y</sub> = ${fmt(r.fy)} MPa; D<sub>b</sub> = ${fmt(r.Db)} mm; β<sub>1</sub> = ${fmt(r.b1, 3)}</div></div>`;
+    html += `<div class="calc-step"><div class="calc-step-title">Doubly reinforced — Design (using M<sub>u</sub>)</div><div class="calc-step-equation">M<sub>u,req</sub> = ${fmt(r.Mu_kNm)} kN·m; b = ${fmt(r.b)} mm; d = ${fmt(r.d)} mm; d′ = ${fmt(r.dp)} mm; f<sub>c</sub>′ = ${fmt(r.fc)} MPa; f<sub>y</sub> = ${fmt(r.fy)} MPa; D<sub>b</sub> = ${fmt(r.Db)} mm; β<sub>1</sub> = ${fmt(r.b1)}</div></div>`;
 
-    html += `<div class="calc-step"><div class="calc-step-title">Assume reduction factor φ = ${fmt(r.phiAssumed, 1)}</div><div class="calc-step-equation">M<sub>n</sub> = M<sub>u</sub>/φ = ${fmt(MnKnm)} kN·m (${fmt(r.Mn_req)} N·mm)</div></div>`;
+    html += `<div class="calc-step"><div class="calc-step-title">Assume reduction factor φ = ${fmt(r.phiAssumed)}</div><div class="calc-step-equation">M<sub>n</sub> = M<sub>u</sub>/φ = ${fmt(MnKnm)} kN·m (${fmt(r.Mn_req)} N·mm)</div></div>`;
 
     html += `<div class="calc-step"><div class="calc-step-title">Solve for M<sub>n1</sub> (max nominal moment, singly reinforced at ρ<sub>max</sub>)</div>`;
-    html += `<div class="calc-step-equation">ρ<sub>max</sub> = (3/7)β<sub>1</sub>(0.85f<sub>c</sub>′/f<sub>y</sub>) = ${fmt(r.rhoMax, 5)}</div>`;
+    html += `<div class="calc-step-equation">ρ<sub>max</sub> = (3/7)β<sub>1</sub>(0.85f<sub>c</sub>′/f<sub>y</sub>) = ${fmt(r.rhoMax, 4)}</div>`;
     html += `<div class="calc-step-equation">A<sub>s,max</sub> = ρ<sub>max</sub>bd = ${fmt(r.Asmax)} mm²</div>`;
     html += `<div class="calc-step-equation">M<sub>n1</sub> = bd²ρ<sub>max</sub>f<sub>y</sub>(1 − ρ<sub>max</sub>f<sub>y</sub>/(1.7f<sub>c</sub>′)) = ${fmt(r.Mn1 / 1e6)} kN·m</div></div>`;
 
@@ -728,7 +759,7 @@
 
     if (r.singlyBranch) {
       html += `<div class="calc-step verification-warn"><div class="calc-step-title">M<sub>n</sub> ≤ M<sub>n1</sub> — singly reinforced suffices</div>`;
-      html += `<div class="calc-step-equation">R<sub>n</sub> = M<sub>n</sub>/(bd²) = ${fmt(r.Mn_req / (r.b * r.d * r.d), 4)}; ρ = (0.85f<sub>c</sub>′/f<sub>y</sub>)(1 − √(1 − 2R<sub>n</sub>/(0.85f<sub>c</sub>′))) = ${fmt(r.rhoReq, 5)}</div>`;
+      html += `<div class="calc-step-equation">R<sub>n</sub> = M<sub>n</sub>/(bd²) = ${fmt(r.Mn_req / (r.b * r.d * r.d))}; ρ = (0.85f<sub>c</sub>′/f<sub>y</sub>)(1 − √(1 − 2R<sub>n</sub>/(0.85f<sub>c</sub>′))) = ${fmt(r.rhoReq, 4)}</div>`;
       html += `<div class="calc-step-equation">A<sub>s,req</sub> = ρbd = ${fmt(r.AsReqCont)} mm²; A<sub>s</sub>′ = 0</div></div>`;
     } else {
       html += `<div class="calc-step"><div class="calc-step-title">Solve for A<sub>s</sub> (couple + tension at ρ<sub>max</sub>)</div>`;
@@ -772,7 +803,7 @@
     }
 
     html += `<div class="calc-step"><div class="calc-step-title">Reduction factor and design moment capacity</div>`;
-    html += `<div class="calc-step-equation">φ from ε<sub>t</sub> (NSCP strain limits) = ${fmt(r.phi, 2)}</div>`;
+    html += `<div class="calc-step-equation">φ from ε<sub>t</sub> (NSCP strain limits) = ${fmt(r.phi)}</div>`;
     html += `<div class="calc-step-equation">M<sub>u,cap</sub> = φ(0.85f<sub>c</sub>′ab(d − a/2) + A<sub>s</sub>′f<sub>s</sub>′(d − d′)) = <span class="calc-step-result">${fmt(r.phiMn / 1e6)} kN·m</span> (f<sub>s</sub>′ as computed)</div></div>`;
 
     const cls = r.safe ? 'verification-ok' : 'verification-warn';
@@ -785,13 +816,11 @@
     const out = getEl('calculation-output');
     if (!out) return;
     refreshPanels();
-    const stepMode = getEl('toggle-step-mode') && getEl('toggle-step-mode').checked;
     const key = getContextKey();
-    if (!stepMode) {
-      renderResultOnlyKey(key, out);
-      return;
-    }
     switch (key) {
+      case 'singly-pick-type':
+        out.innerHTML = '<div class="calc-step"><p>Select <strong>Rectangular Beam</strong> or <strong>T‑Beam</strong> to run calculations.</p></div>';
+        break;
       case 'rect-analysis':
         renderRectangularAnalysis(calcRectangularAnalysis(), out);
         break;
@@ -813,47 +842,6 @@
       default:
         out.innerHTML = '<div class="calc-step"><p>Select options.</p></div>';
     }
-    highlightResults(out);
-  }
-
-  function renderResultOnlyKey(key, out) {
-    let r;
-    let html = '';
-    switch (key) {
-      case 'rect-analysis':
-        r = calcRectangularAnalysis();
-        if (!r) { out.innerHTML = '<p>Enter valid inputs.</p>'; return; }
-        html = `<div class="calc-step"><div class="calc-step-result">M<sub>u</sub> = ${fmt(r.Mu_kNm)} kN·m, φM<sub>n</sub> = ${fmt(r.phiMn / 1e6)} kN·m, ρ = ${fmt(r.rho, 4)}</div></div>`;
-        break;
-      case 'rect-design':
-        r = calcRectangularDesignLoads();
-        if (!r) { out.innerHTML = '<p>Enter valid inputs.</p>'; return; }
-        html = `<div class="calc-step"><div class="calc-step-result">b×h×d = ${fmt(r.b)}×${fmt(r.h)}×${fmt(r.d)} mm, n<sub>b</sub> = ${r.nb}, φM<sub>n</sub> = ${fmt(r.phiMn / 1e6)} kN·m, ${r.safe ? 'SAFE' : 'NOT SAFE'}</div></div>`;
-        break;
-      case 'tbeam-analysis':
-        r = calcTBeamAnalysis();
-        if (!r) { out.innerHTML = '<p>Enter valid inputs.</p>'; return; }
-        html = `<div class="calc-step"><div class="calc-step-result">φM<sub>n</sub> = ${fmt(r.phiMn / 1e6)} kN·m, ${r.safe ? 'SAFE' : 'NOT SAFE'}</div></div>`;
-        break;
-      case 'tbeam-design':
-        r = calcTBeamDesignLoads();
-        if (!r || r.error) { out.innerHTML = '<p>Adjust inputs.</p>'; return; }
-        html = `<div class="calc-step"><div class="calc-step-result">N<sub>b</sub> = ${r.Nb}, φM<sub>n</sub> = ${fmt(r.phiMn / 1e6)} kN·m, ${r.safe ? 'SAFE' : 'NOT SAFE'}</div></div>`;
-        break;
-      case 'doubly-analysis':
-        r = calcDoublyAnalysis();
-        if (!r) { out.innerHTML = '<p>Enter valid inputs.</p>'; return; }
-        html = `<div class="calc-step"><div class="calc-step-result">φM<sub>n</sub> = ${fmt(r.phiMn / 1e6)} kN·m, M<sub>u</sub> capacity = ${fmt(r.Mu_kNm)} kN·m</div></div>`;
-        break;
-      case 'doubly-design':
-        r = calcDoublyDesignLoads();
-        if (!r) { out.innerHTML = '<p>Enter valid inputs.</p>'; return; }
-        html = `<div class="calc-step"><div class="calc-step-result">M<sub>u</sub> = ${fmt(r.Mu_kNm)} kN·m, ${r.doublyRequired ? 'A<sub>sc</sub> req.' : 'Singly OK'}, ${r.safe ? 'SAFE' : 'NOT SAFE'}</div></div>`;
-        break;
-      default:
-        html = '<p>—</p>';
-    }
-    out.innerHTML = html;
     highlightResults(out);
   }
 
@@ -881,6 +869,20 @@
 
     let b = 300, h = 500, d = 450, Nb = 4, Db = 20, Nbc = 0, a = 0;
     const main = getMain();
+
+    if (main === 'singly' && !getSinglyType()) {
+      rect.setAttribute('width', '200');
+      rect.setAttribute('height', '240');
+      rect.setAttribute('x', '40');
+      rect.setAttribute('y', '40');
+      if (caption) caption.textContent = 'Select beam type (rectangular or T‑beam).';
+      if (compBlock) {
+        compBlock.setAttribute('height', '0');
+        compBlock.setAttribute('display', 'none');
+      }
+      tensionG.innerHTML = '';
+      return;
+    }
 
     if (main === 'singly' && getSinglyType() === 'tbeam') {
       let bf; let bw; let hf; let r;
@@ -1043,10 +1045,33 @@
   function initMainTabs() {
     document.querySelectorAll('.main-tab').forEach(btn => {
       btn.addEventListener('click', () => {
+        const prevActive = document.querySelector('.main-tab.active');
+        const prevMain = prevActive ? prevActive.dataset.main : null;
+
         document.querySelectorAll('.main-tab').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
+        const m = btn.dataset.main;
+
+        if (m === 'doubly') {
+          toolbarReveal = 'doubly-full';
+        } else if (m === 'singly') {
+          if (prevMain !== 'singly') {
+            toolbarReveal = 'singly-types';
+            document.querySelectorAll('.sub-tab').forEach(b => b.classList.remove('active'));
+          }
+        }
+        syncToolbarReveal();
         runActiveCalculation();
         updateBeamViz();
+
+        const calcRoot = getEl('calculator');
+        if (calcRoot) {
+          let motion = 'smooth';
+          try {
+            if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) motion = 'auto';
+          } catch (e) {}
+          calcRoot.scrollIntoView({ behavior: motion, block: 'start' });
+        }
       });
     });
   }
@@ -1056,6 +1081,8 @@
       btn.addEventListener('click', () => {
         document.querySelectorAll('.sub-tab').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
+        toolbarReveal = 'singly-full';
+        syncToolbarReveal();
         runActiveCalculation();
         updateBeamViz();
       });
@@ -1097,22 +1124,39 @@
     syncDoublyModeFields();
   }
 
-  function initStepDark() {
-    const chk = getEl('toggle-step-mode');
-    if (chk) chk.addEventListener('change', runActiveCalculation);
-    const dark = getEl('toggle-dark');
-    if (dark) {
-      try {
-        if (localStorage.getItem('rcd-dark') === 'true') {
-          dark.checked = true;
-          document.documentElement.setAttribute('data-theme', 'dark');
-        }
-      } catch (e) {}
-      dark.addEventListener('change', () => {
-        document.documentElement.setAttribute('data-theme', dark.checked ? 'dark' : '');
-        try { localStorage.setItem('rcd-dark', dark.checked); } catch (e2) {}
-      });
+  function syncThemeToggleButton(btn) {
+    if (!btn) return;
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    btn.classList.toggle('is-dark', isDark);
+    btn.setAttribute('aria-pressed', isDark ? 'true' : 'false');
+    btn.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
+  }
+
+  function initThemeToggle() {
+    const btn = getEl('toggle-theme');
+    if (!btn) return;
+    try {
+      const stored = localStorage.getItem('rcd-dark');
+      if (stored === 'false') {
+        document.documentElement.removeAttribute('data-theme');
+      } else {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
+    } catch (e) {
+      document.documentElement.setAttribute('data-theme', 'dark');
     }
+    syncThemeToggleButton(btn);
+    btn.addEventListener('click', () => {
+      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+      const next = !isDark;
+      if (next) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      } else {
+        document.documentElement.removeAttribute('data-theme');
+      }
+      syncThemeToggleButton(btn);
+      try { localStorage.setItem('rcd-dark', next ? 'true' : 'false'); } catch (e2) {}
+    });
   }
 
   function initNavLinks() {
@@ -1140,11 +1184,45 @@
     });
   }
 
+  function initAboutReveal() {
+    const section = getEl('about');
+    if (!section) return;
+    const reveal = () => section.classList.add('about-visible');
+
+    try {
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        reveal();
+        return;
+      }
+    } catch (e) {}
+
+    if (typeof IntersectionObserver === 'undefined') {
+      reveal();
+      return;
+    }
+
+    const io = new IntersectionObserver(
+      (entries, obs) => {
+        entries.forEach((ent) => {
+          if (ent.isIntersecting) {
+            reveal();
+            obs.disconnect();
+          }
+        });
+      },
+      { threshold: 0.12, rootMargin: '0px 0px -6% 0px' }
+    );
+    io.observe(section);
+  }
+
   function init() {
+    toolbarReveal = 'main';
+    syncToolbarReveal();
+    initAboutReveal();
     initMainTabs();
     initSubTabs();
     initModeRadios();
-    initStepDark();
+    initThemeToggle();
     initNavLinks();
     initDelegatedInputs();
     refreshPanels();
